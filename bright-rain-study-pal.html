@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>cc小螃蟹吃AI小饼干</title>
+  <style>
+    :root {
+      --ink: #1f2722;
+      --paper: #d9dfcf;
+      --paper-dark: #b9c0ae;
+      --case: #f0efe8;
+      --case-edge: #47483f;
+      --accent: #8f3f2c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(90deg, rgba(31, 39, 34, 0.04) 1px, transparent 1px),
+        linear-gradient(rgba(31, 39, 34, 0.04) 1px, transparent 1px),
+        #cfd5c5;
+      background-size: 18px 18px;
+      color: var(--ink);
+      font-family: "Courier New", Consolas, monospace;
+    }
+
+    .toy {
+      width: min(94vw, 760px);
+      padding: 24px 24px 18px;
+      border: 4px solid var(--case-edge);
+      border-radius: 18px 18px 28px 28px;
+      background: var(--case);
+      box-shadow: 0 22px 0 #b8b6aa, 0 28px 38px rgba(31, 39, 34, 0.25);
+    }
+
+    .brand-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .brand {
+      font-size: 22px;
+    }
+
+    .badge {
+      padding: 5px 8px;
+      border: 2px solid var(--ink);
+      background: #fff8e3;
+      font-size: 14px;
+    }
+
+    .screen-wrap {
+      padding: 16px;
+      border: 4px solid var(--ink);
+      background: #353a34;
+      border-radius: 8px;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border: 3px solid #101410;
+      background: var(--paper);
+      overflow: hidden;
+      image-rendering: pixelated;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(31, 39, 34, 0.07),
+        rgba(31, 39, 34, 0.07) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      mix-blend-mode: multiply;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .pad {
+      display: grid;
+      grid-template-columns: repeat(3, 44px);
+      grid-template-rows: repeat(2, 38px);
+      gap: 7px;
+    }
+
+    button {
+      border: 3px solid var(--ink);
+      background: #e3e0d5;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: inset -3px -3px 0 rgba(31, 39, 34, 0.16);
+    }
+
+    button:active {
+      transform: translateY(2px);
+      box-shadow: inset 2px 2px 0 rgba(31, 39, 34, 0.18);
+    }
+
+    .pad button {
+      min-width: 44px;
+      min-height: 38px;
+    }
+
+    .left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .right {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .start {
+      min-width: 112px;
+      height: 44px;
+      border-radius: 999px;
+      background: #f4d4c2;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #d7e4dd;
+    }
+
+    .speaker {
+      justify-self: end;
+      display: grid;
+      grid-template-columns: repeat(5, 8px);
+      gap: 7px;
+      padding: 12px;
+    }
+
+    .speaker span {
+      width: 8px;
+      height: 52px;
+      border-radius: 8px;
+      background: var(--ink);
+      opacity: 0.55;
+    }
+
+    .hint {
+      margin-top: 13px;
+      font-size: 14px;
+      text-align: center;
+      color: #4d554d;
+    }
+
+    @media (max-width: 560px) {
+      .toy {
+        padding: 16px;
+      }
+
+      .brand {
+        font-size: 18px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+
+      .speaker {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="toy" aria-label="古早学习机cc小螃蟹吃AI小饼干">
+    <div class="brand-row">
+      <div class="brand">BRIGHT RAIN STUDY PAL</div>
+      <div class="badge">COOKIE-01</div>
+    </div>
+
+    <div class="screen-wrap">
+      <div class="screen">
+        <canvas id="game" width="320" height="240" aria-label="cc小螃蟹吃AI小饼干游戏画面"></canvas>
+        <div class="scanlines"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="pad" aria-label="方向键">
+        <button class="left" id="leftBtn" type="button" aria-label="向左">◀</button>
+        <button class="right" id="rightBtn" type="button" aria-label="向右">▶</button>
+      </div>
+      <div class="actions">
+        <button class="start" id="startBtn" type="button">START</button>
+        <button class="action" id="actionBtn" type="button" aria-label="A">A</button>
+      </div>
+      <div class="speaker" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="hint">键盘：← → 移动，空格开始 / 暂停</div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const startBtn = document.getElementById("startBtn");
+    const actionBtn = document.getElementById("actionBtn");
+    const leftBtn = document.getElementById("leftBtn");
+    const rightBtn = document.getElementById("rightBtn");
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const groundY = 206;
+    const keys = { left: false, right: false };
+    const games = ["CRAB COOKIE", "BLOCK RAIN", "CRAB JUMP"];
+
+    let mode = "menu";
+    let selectedGame = 0;
+    let state = "menu";
+    let tick = 0;
+
+    let cookieScore = 0;
+    let lives = 3;
+    let lastDrop = 0;
+    let cookies = [];
+    let crumbs = [];
+    let crab = { x: 140, y: groundY - 40, w: 42, h: 40 };
+    let lastSnack = "READY";
+
+    const cookieTypes = [
+      { label: "GPT", score: 1, icon: "gpt" },
+      { label: "CLD", score: 1, icon: "claude" },
+      { label: "DS", score: 2, icon: "deepseek" }
+    ];
+
+    const crabPixelPath = new Path2D("M21 10.5h3v3h-3v3h-1.5v3H18v-3h-1.5v3H15v-3H9v3H7.5v-3H6v3H4.5v-3H3v-3H0v-3h3v-6h18Zm-15 0h1.5v-3H6Zm10.5 0H18v-3h-1.5z");
+    const gptPixelPath = new Path2D("M22 8V7h-1V6h-2V4h-1V3h-1V2h-1V1h-5v1h-1v1H9V2H6v1H4v1H3v2H2v5H1v5h1v1h1v1h2v2h1v1h1v1h5v-1h1v-1h1v1h3v-1h2v-1h1v-2h1v-5h1V8ZM9 6h1V4h1V3h5v1h1v1h-5v1h-1v1h-1v2H9v2H8V8h1ZM5 17v-1H4v-1H3v-4h1v2h1v2h8v1h-1v1Zm10 1h-1v2h-1v1H8v-1H7v-1h5v-1h1v-1h1v-2h1v-2h1v3h-1Zm5 0h-1v1h-1v1h-2v-2h1v-2h1v-2h-1v-2h-1v-1h-1v1h-1v2h-4v-1H9v1H7v-1H6v-1H5v-2H4V6h1V5h1V4h2v2H7v2H6v2h1v2h1v1h1v-1h1v-2h4v1h1v-1h2v1h1v1h1v2h1Zm1-5h-1v-2h-1V9h-8V8h1V7h7v1h1v1h1Z");
+    const claudePixelPath = new Path2D("M13.604 2.006a1 1 0 0 1 .89 1.099l-.643 6.104l3.868-4.834a1 1 0 0 1 1.562 1.25l-4.19 5.237l5.68-1.336a1.001 1.001 0 0 1 .458 1.948l-3.77.886l3.715.656a1 1 0 1 1-.348 1.968l-4.901-.865l4.225 3.622a.999.999 0 1 1-1.3 1.518l-2.324-1.991l1.331 2.217a1 1 0 0 1-1.715 1.03l-2.992-4.988l-.657 5.59a1 1 0 0 1-1.986-.234l.556-4.732l-3.256 4.44a1 1 0 0 1-1.614-1.183l2.564-3.497l-3.242 1.947a1 1 0 0 1-1.03-1.715l4.693-2.817L2.948 13a1 1 0 0 1 .105-1.998l6.218.327L3.901 7.3A1 1 0 1 1 5.1 5.7l4.446 3.335l-2.93-5.57a1 1 0 0 1 1.769-.93l3.466 6.584l.655-6.223a1 1 0 0 1 1.098-.89");
+    const deepseekPixelPath = new Path2D("M21.79 5.88c-.21-.1-.3.09-.43.2c-.04.03-.08.08-.11.11c-.31.33-.67.55-1.14.52c-.69-.04-1.28.18-1.8.71c-.11-.65-.48-1.04-1.04-1.29c-.29-.13-.59-.26-.8-.54c-.14-.2-.18-.42-.25-.64c-.05-.13-.09-.27-.24-.29c-.17-.03-.23.11-.3.23c-.26.48-.36 1-.35 1.53c.02 1.2.53 2.15 1.53 2.83c.11.08.14.16.11.27c-.07.23-.15.46-.22.69c-.05.15-.11.18-.27.12a4.8 4.8 0 0 1-1.45-.98c-.71-.69-1.36-1.45-2.16-2.05q-.285-.21-.57-.39c-.82-.8.11-1.45.32-1.53c.23-.08.08-.36-.65-.36s-1.39.25-2.24.57a2 2 0 0 1-.39.11a7.7 7.7 0 0 0-2.4-.08c-1.57.17-2.82.92-3.75 2.19c-1.11 1.52-1.37 3.25-1.05 5.06c.34 1.9 1.31 3.48 2.8 4.71c1.55 1.28 3.33 1.9 5.36 1.78c1.23-.07 2.61-.24 4.16-1.55c.39.2.8.27 1.48.33c.53.05 1.03-.03 1.42-.11c.61-.13.57-.7.35-.8c-1.8-.84-1.4-.5-1.76-.77c.91-1.08 2.29-2.2 2.83-5.84c.04-.29 0-.47 0-.7c0-.14.03-.2.19-.21c.45-.05.89-.18 1.29-.4c1.16-.64 1.63-1.68 1.74-2.93c.02-.19 0-.39-.21-.49ZM11.65 17.15c-1.74-1.37-2.58-1.82-2.93-1.8c-.33.02-.27.39-.2.64c.08.24.17.41.31.62c.1.14.16.35-.09.5c-.56.35-1.53-.12-1.58-.14c-1.13-.67-2.08-1.55-2.75-2.76c-.64-1.16-1.02-2.41-1.08-3.73c-.02-.32.08-.43.4-.49c.42-.08.85-.09 1.27-.03c1.78.26 3.29 1.05 4.56 2.31c.72.72 1.27 1.57 1.83 2.41c.6.89 1.24 1.73 2.07 2.43c.29.24.52.43.74.56c-.67.07-1.78.09-2.54-.51Zm.83-5.37c0-.14.11-.26.25-.26c.03 0 .06 0 .09.02c.1.04.17.13.17.24c0 .14-.11.26-.25.26s-.25-.11-.25-.25Zm2.59 1.33c-.17.07-.33.13-.49.13c-.24 0-.47-.07-.66-.21c-.23-.19-.39-.3-.46-.63c-.02-.16-.02-.33.01-.49c.06-.27 0-.45-.2-.61c-.16-.13-.35-.17-.57-.17c-.07 0-.15-.03-.21-.07c-.11-.05-.15-.17-.1-.28v-.02c.02-.04.13-.15.16-.17c.3-.17.64-.11.95.01c.29.12.52.34.83.65c.33.38.39.48.57.76c.15.22.28.45.37.71c.06.16-.02.29-.21.38Z");
+
+    const COLS = 10;
+    const ROWS = 18;
+    const CELL = 10;
+    const boardX = 96;
+    const boardY = 34;
+    const pieces = [
+      [[1, 1, 1, 1]],
+      [[1, 1], [1, 1]],
+      [[0, 1, 0], [1, 1, 1]],
+      [[1, 1, 0], [0, 1, 1]],
+      [[0, 1, 1], [1, 1, 0]],
+      [[1, 0, 0], [1, 1, 1]],
+      [[0, 0, 1], [1, 1, 1]]
+    ];
+    let board = [];
+    let block = null;
+    let nextBlock = null;
+    let blockScore = 0;
+    let lines = 0;
+    let lastFall = 0;
+
+    let jumpScore = 0;
+    let jumpLives = 3;
+    let jumpCrab = { x: 48, y: 156, w: 42, h: 40, vx: 0, vy: 0, onGround: false };
+    let cameraX = 0;
+    let jumpItems = [];
+    let jumpHazards = [];
+    let jumpPlatforms = [];
+
+    function rect(x, y, w, h, color = "#1f2722") {
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+    }
+
+    function text(value, x, y, size = 10, align = "left") {
+      ctx.fillStyle = "#1f2722";
+      ctx.font = `${size}px "Courier New", monospace`;
+      ctx.textAlign = align;
+      ctx.textBaseline = "top";
+      ctx.fillText(value, x, y);
+    }
+
+    function outline(x, y, w, h, color = "#1f2722") {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+    }
+
+    function drawTopBar(left, center, right) {
+      rect(0, 0, W, H, "#d9dfcf");
+      rect(0, 0, W, 22, "#b9c0ae");
+      text(left, 8, 6, 10);
+      text(center, W / 2, 6, 9, "center");
+      text(right, W - 8, 6, 10, "right");
+    }
+
+    function drawIcon(path, x, y, scale = 1.12) {
+      ctx.save();
+      ctx.translate(Math.round(x + 1), Math.round(y + 1));
+      ctx.scale(scale, scale);
+      ctx.fillStyle = "#1f2722";
+      ctx.fill(path);
+      ctx.restore();
+    }
+
+    function drawCookie(c) {
+      if (c.type.icon === "gpt") drawIcon(gptPixelPath, c.x, c.y);
+      if (c.type.icon === "claude") drawIcon(claudePixelPath, c.x, c.y);
+      if (c.type.icon === "deepseek") drawIcon(deepseekPixelPath, c.x, c.y);
+    }
+
+    function drawCrab() {
+      ctx.save();
+      ctx.translate(Math.round(crab.x), Math.round(crab.y + (tick % 38 < 19 ? 0 : 1)));
+      ctx.scale(1.75, 1.75);
+      ctx.fillStyle = "#1f2722";
+      ctx.fill(crabPixelPath);
+      ctx.restore();
+    }
+
+    function drawMenu() {
+      drawTopBar("BRIGHT", "SELECT GAME", "RAIN");
+      text("GAME SELECT", W / 2, 42, 18, "center");
+      games.forEach((name, i) => {
+        const x = [24, 106, 188][i];
+        const y = 82;
+        rect(x, y, 76, 72, "#d9dfcf");
+        outline(x, y, 76, 72);
+        if (selectedGame === i) {
+          rect(x + 5, y + 5, 66, 5);
+          rect(x + 5, y + 62, 66, 5);
+          rect(x + 5, y + 5, 5, 62);
+          rect(x + 66, y + 5, 5, 62);
+        }
+        text(name.split(" ")[0], x + 38, y + 12, 10, "center");
+        text(name.split(" ")[1], x + 38, y + 26, 10, "center");
+        text(["SNACK", "TETRIS", "MARIO"][i], x + 38, y + 46, 9, "center");
+      });
+      text("<  > CHANGE", W / 2, 174, 10, "center");
+      text("START PLAY", W / 2, 190, 10, "center");
+    }
+
+    function startSelectedGame() {
+      if (selectedGame === 0) resetCookieGame();
+      if (selectedGame === 1) resetBlockGame();
+      if (selectedGame === 2) resetJumpGame();
+    }
+
+    function goMenu() {
+      mode = "menu";
+      state = "menu";
+      startBtn.textContent = "START";
+    }
+
+    function toggleStart() {
+      if (mode === "menu") {
+        startSelectedGame();
+      } else if (state === "gameover") {
+        goMenu();
+      } else if (state === "playing") {
+        state = "paused";
+        startBtn.textContent = "START";
+      } else if (state === "paused") {
+        state = "playing";
+        startBtn.textContent = "PAUSE";
+      }
+    }
+
+    function resetCookieGame() {
+      mode = "cookie";
+      state = "playing";
+      tick = 0;
+      cookieScore = 0;
+      lives = 3;
+      lastDrop = 0;
+      cookies = [];
+      crumbs = [];
+      crab.x = 140;
+      lastSnack = "READY";
+      startBtn.textContent = "PAUSE";
+    }
+
+    function spawnCookie() {
+      cookies.push({
+        x: 12 + Math.floor(Math.random() * (W - 52)),
+        y: 32,
+        vy: 0.42 + Math.min(cookieScore * 0.015, 0.65),
+        wobble: Math.random() * 6.28,
+        type: cookieTypes[Math.floor(Math.random() * cookieTypes.length)]
+      });
+    }
+
+    function makeCrumbs(x, y) {
+      for (let i = 0; i < 6; i++) {
+        crumbs.push({ x: x + 8, y: y + 8, vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 1.4, life: 24 });
+      }
+    }
+
+    function updateCookieGame() {
+      if (keys.left) crab.x -= 1.9;
+      if (keys.right) crab.x += 1.9;
+      crab.x = Math.max(8, Math.min(W - crab.w - 8, crab.x));
+
+      if (tick - lastDrop > Math.max(48, 82 - cookieScore * 2)) {
+        spawnCookie();
+        lastDrop = tick;
+      }
+
+      cookies.forEach(c => {
+        c.y += c.vy;
+        c.x += Math.sin(tick * 0.045 + c.wobble) * 0.18;
+      });
+
+      cookies = cookies.filter(c => {
+        const hit = c.x < crab.x + crab.w && c.x + 28 > crab.x && c.y < crab.y + crab.h && c.y + 28 > crab.y;
+        if (hit) {
+          cookieScore += c.type.score;
+          lastSnack = `${c.type.label} COOKIE`;
+          makeCrumbs(c.x, c.y);
+          return false;
+        }
+        if (c.y > groundY - 18) {
+          lives -= 1;
+          makeCrumbs(c.x, groundY - 16);
+          if (lives <= 0) {
+            state = "gameover";
+            startBtn.textContent = "START";
+          }
+          return false;
+        }
+        return true;
+      });
+
+      crumbs.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.08;
+        p.life -= 1;
+      });
+      crumbs = crumbs.filter(p => p.life > 0);
+    }
+
+    function drawCookieGame() {
+      drawTopBar(`SCORE ${String(cookieScore).padStart(3, "0")}`, lastSnack, `LIFE ${"O".repeat(lives)}`);
+      for (let i = 0; i < 20; i++) rect(i * 18, groundY + (i % 2 ? 1 : 0), 11, 3);
+      rect(0, groundY + 8, W, 3);
+      rect(18, 48, 28, 2, "#87917f");
+      rect(212, 62, 54, 2, "#87917f");
+      rect(56, 92, 36, 2, "#87917f");
+      cookies.forEach(drawCookie);
+      crumbs.forEach(p => rect(p.x, p.y, 2, 2));
+      drawCrab();
+    }
+
+    function cloneShape(shape) {
+      return shape.map(row => row.slice());
+    }
+
+    function makeBlock() {
+      return { shape: cloneShape(pieces[Math.floor(Math.random() * pieces.length)]), x: 3, y: 0 };
+    }
+
+    function resetBlockGame() {
+      mode = "block";
+      state = "playing";
+      tick = 0;
+      board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+      blockScore = 0;
+      lines = 0;
+      lastFall = 0;
+      block = makeBlock();
+      nextBlock = makeBlock();
+      startBtn.textContent = "PAUSE";
+    }
+
+    function rotateShape(shape) {
+      return shape[0].map((_, x) => shape.map(row => row[x]).reverse());
+    }
+
+    function hitBoard(shape, ox, oy) {
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+          if (!shape[y][x]) continue;
+          const bx = ox + x;
+          const by = oy + y;
+          if (bx < 0 || bx >= COLS || by >= ROWS) return true;
+          if (by >= 0 && board[by][bx]) return true;
+        }
+      }
+      return false;
+    }
+
+    function moveBlock(dx, dy) {
+      if (!block || hitBoard(block.shape, block.x + dx, block.y + dy)) return false;
+      block.x += dx;
+      block.y += dy;
+      return true;
+    }
+
+    function rotateBlock() {
+      if (mode !== "block" || state !== "playing" || !block) return;
+      const rotated = rotateShape(block.shape);
+      if (!hitBoard(rotated, block.x, block.y)) block.shape = rotated;
+      else if (!hitBoard(rotated, block.x - 1, block.y)) { block.x -= 1; block.shape = rotated; }
+      else if (!hitBoard(rotated, block.x + 1, block.y)) { block.x += 1; block.shape = rotated; }
+    }
+
+    function lockBlock() {
+      block.shape.forEach((row, y) => {
+        row.forEach((cell, x) => {
+          if (cell && block.y + y >= 0) board[block.y + y][block.x + x] = 1;
+        });
+      });
+      let cleared = 0;
+      board = board.filter(row => {
+        if (row.every(Boolean)) {
+          cleared += 1;
+          return false;
+        }
+        return true;
+      });
+      while (board.length < ROWS) board.unshift(Array(COLS).fill(0));
+      if (cleared) {
+        lines += cleared;
+        blockScore += [0, 100, 260, 420, 680][cleared];
+      }
+      block = nextBlock;
+      nextBlock = makeBlock();
+      if (hitBoard(block.shape, block.x, block.y)) {
+        state = "gameover";
+        startBtn.textContent = "START";
+      }
+    }
+
+    function updateBlockGame() {
+      const fallRate = Math.max(14, 42 - Math.floor(lines / 3) * 4);
+      if (tick - lastFall >= fallRate) {
+        if (!moveBlock(0, 1)) lockBlock();
+        lastFall = tick;
+      }
+    }
+
+    function drawCell(x, y, fill = true) {
+      const px = boardX + x * CELL;
+      const py = boardY + y * CELL;
+      if (fill) {
+        rect(px + 1, py + 1, CELL - 2, CELL - 2);
+        rect(px + 3, py + 3, CELL - 6, 2, "#d9dfcf");
+      } else {
+        outline(px, py, CELL, CELL, "#87917f");
+      }
+    }
+
+    function drawShape(shape, ox, oy) {
+      shape.forEach((row, y) => {
+        row.forEach((cell, x) => {
+          if (cell) drawCell(ox + x, oy + y, true);
+        });
+      });
+    }
+
+    function drawMiniShape(shape, x, y) {
+      shape.forEach((row, yy) => {
+        row.forEach((cell, xx) => {
+          if (cell) rect(x + xx * 7, y + yy * 7, 6, 6);
+        });
+      });
+    }
+
+    function drawBlockGame() {
+      drawTopBar(`SCORE ${blockScore}`, "BLOCK RAIN", `LINE ${lines}`);
+      outline(boardX - 2, boardY - 2, COLS * CELL + 4, ROWS * CELL + 4);
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          if (board[y][x]) drawCell(x, y, true);
+          else if ((x + y) % 2 === 0) rect(boardX + x * CELL + 4, boardY + y * CELL + 4, 1, 1, "#87917f");
+        }
+      }
+      if (block) drawShape(block.shape, block.x, block.y);
+      text("NEXT", 220, 48, 10);
+      outline(218, 64, 58, 44);
+      drawMiniShape(nextBlock.shape, 230, 78);
+      text("A ROTATE", 218, 128, 9);
+      text("DOWN DROP", 218, 144, 9);
+      text("ESC MENU", 218, 160, 9);
+    }
+
+    function resetJumpGame() {
+      mode = "jump";
+      state = "playing";
+      tick = 0;
+      jumpScore = 0;
+      jumpLives = 3;
+      cameraX = 0;
+      jumpCrab = { x: 48, y: 156, w: 42, h: 40, vx: 0, vy: 0, onGround: false };
+      jumpPlatforms = [
+        { x: 0, y: 202, w: 520, h: 16 },
+        { x: 570, y: 202, w: 360, h: 16 },
+        { x: 120, y: 156, w: 66, h: 12 },
+        { x: 258, y: 128, w: 58, h: 12 },
+        { x: 420, y: 162, w: 74, h: 12 },
+        { x: 646, y: 150, w: 68, h: 12 },
+        { x: 780, y: 120, w: 62, h: 12 }
+      ];
+      jumpItems = [
+        { x: 138, y: 126, icon: "gpt", taken: false },
+        { x: 276, y: 98, icon: "claude", taken: false },
+        { x: 442, y: 132, icon: "deepseek", taken: false },
+        { x: 660, y: 120, icon: "gpt", taken: false },
+        { x: 794, y: 90, icon: "deepseek", taken: false }
+      ];
+      jumpHazards = [
+        { x: 336, y: 186, w: 24, h: 16 },
+        { x: 536, y: 186, w: 24, h: 16 },
+        { x: 736, y: 186, w: 24, h: 16 }
+      ];
+      startBtn.textContent = "PAUSE";
+    }
+
+    function jump() {
+      if (mode === "jump" && state === "playing" && jumpCrab.onGround) {
+        jumpCrab.vy = -5.7;
+        jumpCrab.onGround = false;
+      }
+    }
+
+    function worldHit(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function resetJumpPosition() {
+      jumpLives -= 1;
+      jumpCrab.x = Math.max(32, cameraX + 24);
+      jumpCrab.y = 126;
+      jumpCrab.vx = 0;
+      jumpCrab.vy = 0;
+      if (jumpLives <= 0) {
+        state = "gameover";
+        startBtn.textContent = "START";
+      }
+    }
+
+    function updateJumpGame() {
+      jumpCrab.vx = 0;
+      if (keys.left) jumpCrab.vx = -1.9;
+      if (keys.right) jumpCrab.vx = 1.9;
+      jumpCrab.x += jumpCrab.vx;
+      jumpCrab.x = Math.max(0, Math.min(900, jumpCrab.x));
+      jumpCrab.vy += 0.24;
+      jumpCrab.y += jumpCrab.vy;
+      jumpCrab.onGround = false;
+
+      jumpPlatforms.forEach(p => {
+        const wasAbove = jumpCrab.y + jumpCrab.h - jumpCrab.vy <= p.y;
+        if (worldHit(jumpCrab, p) && jumpCrab.vy >= 0 && wasAbove) {
+          jumpCrab.y = p.y - jumpCrab.h;
+          jumpCrab.vy = 0;
+          jumpCrab.onGround = true;
+        }
+      });
+
+      jumpItems.forEach(item => {
+        if (!item.taken && worldHit(jumpCrab, { x: item.x, y: item.y, w: 28, h: 28 })) {
+          item.taken = true;
+          jumpScore += item.icon === "deepseek" ? 2 : 1;
+        }
+      });
+
+      jumpHazards.forEach(h => {
+        if (worldHit(jumpCrab, h)) resetJumpPosition();
+      });
+
+      if (jumpCrab.y > H + 40) resetJumpPosition();
+      if (jumpCrab.x > 880) {
+        state = "gameover";
+        startBtn.textContent = "START";
+      }
+      cameraX = Math.max(0, Math.min(640, jumpCrab.x - 112));
+    }
+
+    function sx(worldX) {
+      return Math.round(worldX - cameraX);
+    }
+
+    function drawJumpCrab() {
+      ctx.save();
+      ctx.translate(Math.round(sx(jumpCrab.x)), Math.round(jumpCrab.y + (tick % 28 < 14 ? 0 : 1)));
+      ctx.scale(1.75, 1.75);
+      ctx.fillStyle = "#1f2722";
+      ctx.fill(crabPixelPath);
+      ctx.restore();
+    }
+
+    function drawSpike(x, y) {
+      rect(sx(x), y + 10, 24, 6);
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(sx(x) + i * 8, y + 10);
+        ctx.lineTo(sx(x) + i * 8 + 4, y);
+        ctx.lineTo(sx(x) + i * 8 + 8, y + 10);
+        ctx.closePath();
+        ctx.fillStyle = "#1f2722";
+        ctx.fill();
+      }
+    }
+
+    function drawJumpGame() {
+      drawTopBar(`SCORE ${jumpScore}`, "CRAB JUMP", `LIFE ${"O".repeat(jumpLives)}`);
+      rect(0, 214, W, 3);
+      for (let i = 0; i < 12; i++) rect((i * 38 - cameraX * 0.25) % 360, 50 + (i % 3) * 22, 18, 2, "#87917f");
+      jumpPlatforms.forEach(p => {
+        rect(sx(p.x), p.y, p.w, p.h);
+        rect(sx(p.x) + 3, p.y + 3, Math.max(0, p.w - 6), 2, "#d9dfcf");
+      });
+      jumpItems.forEach(item => {
+        if (item.taken) return;
+        if (item.icon === "gpt") drawIcon(gptPixelPath, sx(item.x), item.y);
+        if (item.icon === "claude") drawIcon(claudePixelPath, sx(item.x), item.y);
+        if (item.icon === "deepseek") drawIcon(deepseekPixelPath, sx(item.x), item.y);
+      });
+      jumpHazards.forEach(h => drawSpike(h.x, h.y));
+      drawJumpCrab();
+      text("A JUMP", 238, 190, 9);
+    }
+
+    function drawOverlay(label, sub) {
+      rect(60, 82, 200, 72, "#d9dfcf");
+      outline(60, 82, 200, 72);
+      text(label, W / 2, 98, 20, "center");
+      text(sub, W / 2, 128, 10, "center");
+    }
+
+    function drawFrame() {
+      if (mode === "menu") {
+        drawMenu();
+        return;
+      }
+      if (mode === "cookie") drawCookieGame();
+      if (mode === "block") drawBlockGame();
+      if (mode === "jump") drawJumpGame();
+      if (state === "paused") drawOverlay("PAUSED", "START RESUME");
+      if (state === "gameover") drawOverlay("GAME OVER", "START MENU");
+    }
+
+    function update() {
+      if (state !== "playing") return;
+      tick += 1;
+      if (mode === "cookie") updateCookieGame();
+      if (mode === "block") updateBlockGame();
+      if (mode === "jump") updateJumpGame();
+    }
+
+    function loop() {
+      update();
+      drawFrame();
+      requestAnimationFrame(loop);
+    }
+
+    function choose(delta) {
+      if (mode !== "menu") return;
+      selectedGame = (selectedGame + delta + games.length) % games.length;
+    }
+
+    function bindHold(button, key) {
+      button.addEventListener("pointerdown", () => {
+        keys[key] = true;
+        if (mode === "menu") choose(key === "left" ? -1 : 1);
+        if (mode === "block" && state === "playing") moveBlock(key === "left" ? -1 : 1, 0);
+      });
+      button.addEventListener("pointerup", () => { keys[key] = false; });
+      button.addEventListener("pointerleave", () => { keys[key] = false; });
+      button.addEventListener("pointercancel", () => { keys[key] = false; });
+    }
+
+    startBtn.addEventListener("click", toggleStart);
+    actionBtn.addEventListener("click", () => {
+      if (mode === "menu") startSelectedGame();
+      else if (mode === "block") rotateBlock();
+      else if (mode === "jump") jump();
+    });
+    bindHold(leftBtn, "left");
+    bindHold(rightBtn, "right");
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") {
+        keys.left = true;
+        if (mode === "menu" && !event.repeat) choose(-1);
+        if (mode === "block" && state === "playing" && !event.repeat) moveBlock(-1, 0);
+      }
+      if (event.key === "ArrowRight") {
+        keys.right = true;
+        if (mode === "menu" && !event.repeat) choose(1);
+        if (mode === "block" && state === "playing" && !event.repeat) moveBlock(1, 0);
+      }
+      if (event.key === "ArrowDown" && mode === "block" && state === "playing" && !event.repeat) moveBlock(0, 1);
+      if ((event.key === "ArrowUp" || event.key.toLowerCase() === "a") && mode === "block" && !event.repeat) rotateBlock();
+      if ((event.key === "ArrowUp" || event.key.toLowerCase() === "a") && mode === "jump" && !event.repeat) jump();
+      if (event.key === "Enter" && mode === "menu") startSelectedGame();
+      if (event.key === "Escape") goMenu();
+      if (event.code === "Space") {
+        event.preventDefault();
+        toggleStart();
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      if (event.key === "ArrowLeft") keys.left = false;
+      if (event.key === "ArrowRight") keys.right = false;
+    });
+
+    drawFrame();
+    loop();
+  </script>
+</body>
+</html>

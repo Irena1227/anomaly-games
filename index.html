@@ -115,6 +115,22 @@
   #intro-overlay .sub { color: #ff8c00; font-size: 17px; opacity: 0.9; }
   #intro-overlay .poem { color: #ffe4cc; font-size: 14px; margin-top: 18px; line-height: 2; text-align: center; opacity: 0.8; }
   #intro-overlay .features { color: #ffd4b8; font-size: 12px; margin-top: 16px; line-height: 1.8; text-align: center; opacity: 0.6; }
+  #intro-overlay .mini-link {
+    margin-top: 18px;
+    color: #d9dfcf;
+    text-decoration: none;
+    border: 1px solid #ffd4b866;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 12px;
+    background: rgba(255, 212, 184, 0.08);
+    transition: transform 0.15s, border-color 0.15s, background 0.15s;
+  }
+  #intro-overlay .mini-link:hover {
+    transform: scale(1.05);
+    border-color: #ffd4b8;
+    background: rgba(255, 212, 184, 0.16);
+  }
   #intro-overlay .hint { color: #ffd4b8; font-size: 12px; margin-top: 24px; opacity: 0.4; animation: blink 2s ease-in-out infinite; }
   @keyframes blink { 0%,100%{opacity:0.4;} 50%{opacity:0.2;} }
 
@@ -186,6 +202,7 @@
       实时聊天 · 一边烤一边斗嘴<br>
       共享大盘 · 点击直接开吃！
     </div>
+    <a class="mini-link" href="bright-rain-study-pal.html" onclick="event.stopPropagation()">Bright Rain Study Pal</a>
     <div class="hint">- 点击任意处开始 -</div>
   </div>
 </div>
